@@ -10,7 +10,7 @@ object main{
   val seed = new java.util.Date().hashCode;
   val rand = new scala.util.Random(seed);
 
-  class hash_function(numBuckets_in: Long) extends Serializable {  // a 2-universal hash family, numBuckets_in is the numer of buckets
+  class hash_function(numBuckets_in: Long) extends Serializable {  // a 2-universal hash family, numBuckets_in is the number of buckets
     val p: Long = 2147483587;  // p is a prime around 2^31 so the computation will fit into 2^63 (Long)
     val a: Long = (rand.nextLong %(p-1)) + 1  // a is a random number is [1,p]
     val b: Long = (rand.nextLong % p) // b is a random number in [0,p]
@@ -43,7 +43,7 @@ object main{
     }
   }
 
-  class four_universal_Radamacher_hash_function extends hash_function(2) {  // a 4-universal hash family, numBuckets_in is the numer of buckets
+  class four_universal_Radamacher_hash_function extends hash_function(2) {  // a 4-universal hash family, numBuckets_in is the number of buckets
     override val a: Long = (rand.nextLong % p)   // a is a random number is [0,p]
     override val b: Long = (rand.nextLong % p) // b is a random number in [0,p]
     val c: Long = (rand.nextLong % p)   // c is a random number is [0,p]
@@ -63,27 +63,27 @@ object main{
     }
   }
 
-  class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
-/* A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
+//   class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
+// /* A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
 
-    var bucket: Set[(String, Int)] = bucket_in
-    var z: Int = z_in
+//     var bucket: Set[(String, Int)] = bucket_in
+//     var z: Int = z_in
 
-    val BJKST_bucket_size = bucket_size_in;
+//     val BJKST_bucket_size = bucket_size_in;
 
-    def this(s: String, z_of_s: Int, bucket_size_in: Int){
-      /* A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch */
-      this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
-    }
+//     def this(s: String, z_of_s: Int, bucket_size_in: Int){
+//       /* A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch */
+//       this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
+//     }
 
-    def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
+//     def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
 
-    }
+//     }
 
-    def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
+//     def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
 
-    }
-  }
+//     }
+//   }
 
 
   def tidemark(x: RDD[String], trials: Int): Double = {
@@ -100,13 +100,47 @@ object main{
 
 
   def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
+    return 2.0
+  }
 
+  // Added by Valencig 
+  def TugOfWarSketch(x: RDD[String], hash_4_universal: four_universal_Radamacher_hash_function) : Long = {
+    val z = (
+      // For every plate hash to [-1, 1] IN PARALLEL
+      x.map(plate => hash_4_universal.hash(plate))
+      // Sum all the hashed counts
+      .sum
+    )
+    // Return the estimate squared (E[z^2] = F_2)
+    val z_squared = (z*z).toLong
+    return z_squared
   }
 
 
   def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
-
+    // DON'T DO 2D ARRAY, IT'S SLOW
+    // Step 1, get means across widths IN PARALLEL
+    val mean_widths = (1 to depth).par.map(d =>
+        // Create width # sketches IN PARALLEL
+        (1 to width).par.map(w => TugOfWarSketch(x, new four_universal_Radamacher_hash_function()))
+        // Sum up estimates and divide by width to get the average
+        .reduce(_+_)/width
+      ).toList // Convert back to a sequence (non-parallelized)
+    // Step 2, get the median of the means
+    val median = mean_widths.sorted.apply(mean_widths.length/2)
+    return median
   }
+
+// def foo() : Double = {
+//   val t1 = System.nanoTime
+//   // (1 to 100).map(i => Tug_of_War(dfrdd, 1, 1))
+//   // (1 to 100).map(i => exact_F2(dfrdd))
+//   Tug_of_War(dfrdd, 1, 1)
+//   // exact_F2(dfrdd)
+//   val duration = (System.nanoTime - t1) / 1e9d
+//   return duration
+// }
+// foo()
 
 
   def exact_F0(x: RDD[String]) : Long = {
@@ -116,7 +150,17 @@ object main{
 
 
   def exact_F2(x: RDD[String]) : Long = {
-
+    val ans = (
+      // For every plate create a tuple of (number, 1)
+      x.map(plate => (plate, 1))
+      // Reduce these tuples by key, adding the numbers together -> (id, count)
+      .reduceByKey(_+_)
+      // Take only the counts for each tuple and square them
+      .map(summed => summed._2*summed._2)
+      // Sum all the squared counts
+      .sum
+    ).toLong
+    return ans
   }
 
 

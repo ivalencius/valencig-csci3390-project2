@@ -83,7 +83,7 @@ object main{
 //     def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
 
 //     }
-//   }
+// }
 
 
   def tidemark(x: RDD[String], trials: Int): Double = {
@@ -100,35 +100,55 @@ object main{
 
 
   def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
+    // // Step 1: run trial sketches
+    // val trial_runs = (1 to trials).par.map(t => {
+    //   // 2-universal hash function for this specific sketch
+    //   val hash_2 = new hash_function()
+    //   // Get first string in x
+    //   val string = x.take(1)
+    //   // Create the sketch (initalize with single string, zeroes of the string, and the bucket size)
+    //   val sketch = new BJKSTSketch(string, hash_2.zeroes(string), BJKST_bucket_size)
+
+    // })
     return 2.0
   }
 
   // Added by Valencig 
-  def TugOfWarSketch(x: RDD[String], hash_4_universal: four_universal_Radamacher_hash_function) : Long = {
-    val z = (
-      // For every plate hash to [-1, 1] IN PARALLEL
-      x.map(plate => hash_4_universal.hash(plate))
-      // Sum all the hashed counts
-      .sum
-    )
-    // Return the estimate squared (E[z^2] = F_2)
-    val z_squared = (z*z).toLong
-    return z_squared
-  }
+  // def TugOfWarSketch(x: RDD[String], hash_4_universal: four_universal_Radamacher_hash_function) : Long = {
+  //   val z = (
+  //     // For every plate hash to [-1, 1] IN PARALLEL
+  //     x.map(plate => hash_4_universal.hash(plate))
+  //     // Sum all the hashed counts
+  //     .sum
+  //   )
+  //   // Return the estimate squared (E[z^2] = F_2)
+  //   val z_squared = (z*z).toLong
+  //   return z_squared
+  // }
 
 
   def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
-    // DON'T DO 2D ARRAY, IT'S SLOW
-    // Step 1, get means across widths IN PARALLEL
-    val mean_widths = (1 to depth).par.map(d =>
-        // Create width # sketches IN PARALLEL
-        (1 to width).par.map(w => TugOfWarSketch(x, new four_universal_Radamacher_hash_function()))
-        // Sum up estimates and divide by width to get the average
-        .reduce(_+_)/width
-      ).toList // Convert back to a sequence (non-parallelized)
-    // Step 2, get the median of the means
-    val median = mean_widths.sorted.apply(mean_widths.length/2)
+    val trials = width*depth
+    // Create hash functions
+    val hashes = Seq.fill(width*depth)(new four_universal_Radamacher_hash_function())
+    // Each accumulator is a tug of war sketch partially run
+    def combine_by_thread = (accumulator: Seq[Long], plate: String) => Seq.range(0, trials).map(i => accumulator(i)+hashes(i).hash(plate))
+    def combine_sketches = (accum1: Seq[Long], accum2: Seq[Long]) => Seq.range(0, trials).map(i => accum1(i)+accum2(i))
+    // Step 1: Run all sketches
+    val sketches_raw = x.aggregate(Seq.fill(trials)(0.toLong))(combine_by_thread, combine_sketches)
+    // Step 2: Group by # widths and get means
+    val mean_widths = sketches_raw.map(z => scala.math.pow(z, 2).toLong).grouped(width).toList.map(w => w.reduce(_+_)/width)
+    // Step 3: get the medians and output the results
+    val median = mean_widths.sortWith(_<_).apply(mean_widths.length/2)
     return median
+    // val widths = Seq.range(0, width*depth).map(d =>
+    //     // Create width # sketches IN PARALLEL
+    //     TugOfWarSketch(x, new four_universal_Radamacher_hash_function())
+    //   ).seq.grouped(width).toList
+    // val mean_widths = widths.map(i => i.reduce(_+_)/width)
+    // // Step 2, get the median of the means
+    // val median = mean_widths.sortWith(_<_).apply(mean_widths.length/2)
+    // return median
   }
 
 // def foo() : Double = {

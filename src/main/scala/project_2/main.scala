@@ -63,27 +63,76 @@ object main{
     }
   }
 
-//   class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
-// /* A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
+  class BJKSTSketch(bucket_in: Set[(String, Int)] ,  z_in: Int, bucket_size_in: Int) extends Serializable {
+/* A constructor that requies intialize the bucket and the z value. The bucket size is the bucket size of the sketch. */
 
-//     var bucket: Set[(String, Int)] = bucket_in
-//     var z: Int = z_in
+    var bucket: Set[(String, Int)] = bucket_in
+    var z: Int = z_in
 
-//     val BJKST_bucket_size = bucket_size_in;
+    val BJKST_bucket_size = bucket_size_in;
 
-//     def this(s: String, z_of_s: Int, bucket_size_in: Int){
-//       /* A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch */
-//       this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
-//     }
+    def this(s: String, z_of_s: Int, bucket_size_in: Int){
+      /* A constructor that allows you pass in a single string, zeroes of the string, and the bucket size to initialize the sketch */
+      this(Set((s, z_of_s )) , z_of_s, bucket_size_in)
+    }
 
-//     def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
+    def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
+      // Set new z
+      val new_z = scala.math.max(this.z, that.z)
+      // Union buckets
+      val new_bucket = this.bucket ++ that.bucket
+      // Remove all elements from the bucket that have less than z trailing zeroes
+      val new_bucket_filtered = new_bucket.filter(plate => plate._2 >= new_z)
+      return new BJKSTSketch(new_bucket_filtered, new_z, this.BJKST_bucket_size)
+    }
 
-//     }
+    def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
+      // Get the number of zeroes in the string
+      if (z_of_s >= z) {
+        // Update bucket
+        bucket = bucket + ((s, z_of_s))
+        while (bucket.size >= BJKST_bucket_size){
+          // Double the number of buckets
+          z = z+1
+          // Remove all elements from the bucket that have less than z trailing zeroes
+          bucket = bucket.filter(plate => plate._2 >= z)
+        }
+      }
+      // Remove elements from the bucket
+      return new BJKSTSketch(bucket, z, BJKST_bucket_size)
+    }
+    // Added by Ilan
+    def get_estimate(): Double = {
+      return bucket.size * scala.math.pow(2, z)
+    }
+  }
 
-//     def add_string(s: String, z_of_s: Int): BJKSTSketch = {   /* add a string to the sketch */
-
-//     }
-// }
+  def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
+    // Width is the largest number of buckets
+    val hashes = Seq.fill(trials)(new hash_function(width))
+    def combine_by_thread = (accumulator: Seq[BJKSTSketch], plate: String) => { 
+      Seq.range(0, trials).map(i => {
+        accumulator(i).add_string(plate, hashes(i).zeroes(hashes(i).hash(plate)))
+        })
+    }
+    def combine_sketches = (accum1: Seq[BJKSTSketch], accum2: Seq[BJKSTSketch]) => {
+      Seq.range(0, trials).map(i => accum1(i)+accum2(i))
+    }
+    val first_string = x.take(1)(0)
+    // Step 1: Run all sketches
+    val sketches_raw = (
+      x.aggregate(
+        Seq.range(0, trials).map(i=> {
+          new BJKSTSketch(first_string, hashes(i).zeroes(hashes(i).hash(first_string)), width)
+        }))
+      (combine_by_thread, combine_sketches)
+    )
+    // Get estimate for each sketch
+    val sketch_estimates = sketches_raw.map(sketch => sketch.get_estimate())
+    // Get the median estimate
+    val sketch_median = sketch_estimates.sortWith(_<_)(trials/2)
+    return sketch_median
+  }
 
 
   def tidemark(x: RDD[String], trials: Int): Double = {
@@ -96,21 +145,6 @@ object main{
     val ans = x3.map(z => scala.math.pow(2,0.5 + z)).sortWith(_ < _)( trials/2) /* Take the median of the trials */
 
     return ans
-  }
-
-
-  def BJKST(x: RDD[String], width: Int, trials: Int) : Double = {
-    // // Step 1: run trial sketches
-    // val trial_runs = (1 to trials).par.map(t => {
-    //   // 2-universal hash function for this specific sketch
-    //   val hash_2 = new hash_function()
-    //   // Get first string in x
-    //   val string = x.take(1)
-    //   // Create the sketch (initalize with single string, zeroes of the string, and the bucket size)
-    //   val sketch = new BJKSTSketch(string, hash_2.zeroes(string), BJKST_bucket_size)
-
-    // })
-    return 2.0
   }
 
   // Added by Valencig 
@@ -139,7 +173,7 @@ object main{
     // Step 2: Group by # widths and get means
     val mean_widths = sketches_raw.map(z => scala.math.pow(z, 2).toLong).grouped(width).toList.map(w => w.reduce(_+_)/width)
     // Step 3: get the medians and output the results
-    val median = mean_widths.sortWith(_<_).apply(mean_widths.length/2)
+    val median = mean_widths.sortWith(_<_)(mean_widths.length/2)
     return median
     // val widths = Seq.range(0, width*depth).map(d =>
     //     // Create width # sketches IN PARALLEL

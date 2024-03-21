@@ -12,28 +12,42 @@ spark-submit \
 
 ## Exact F0
 __Inputs__: `exactF0`
+
 _Running Locally_
+
 `Exact F0. Time elapsed:15s. Estimate: 7406649`
+
 _Running on GCP_
 
 ## Exact F2
 __Inputs__: `exactF2`
+
 _Running Locally_
+
 `Exact F2. Time elapsed:16s. Estimate: 8567966130`
+
 _Running on GCP_
 
 ## Tug-of-War (F2)
 __Inputs__: `ToW 10 3`
+
 _Running Locally_
+
 `ug-of-War F2 Approximation. Width :10. Depth: 3. Time elapsed:13s. Estimate: 6764401820`
+
 _Running on GCP_
 
 ## BJKST (F0)
 __Determination of maximum bucket size__
+
 The maximum bucket size $|B|$ is determined by a constant $c$ and parameter $\varepsilon$ according to $|B| = \frac{c}{\varepsilon^2}$ and outputs a $(\varepsilon, \frac{1}{3})$ estimate. We are attempting to find a $\pm$ 20% estimate so $\varepsilon=0.2$. To determine $c$ we use the relation $$\mathbb{P}(\text{Failure}) \leq \frac{1}{12} +\frac{48}{c}$$ which is derived by using Chebyshev's inequality and Markov's inequality ([Chkrabarti Notes](https://www.cs.dartmouth.edu/~ac/Teach/data-streams-lecnotes.pdf), pg. 19.). For a $(\varepsilon, \frac{1}{3})$ estimate this probability must be upper bounded by $\frac{1}{6}$, therefore $$\mathbb{P}(\text{Failure}) \leq \frac{1}{12} +\frac{48}{c} \leq \frac{1}{6}$$ Solving this numerically yields a result of $c \geq 576$. Plugging into $\frac{c}{\varepsilon^2}$ yields $\boxed{14,400}$ for the maximum bucket with.
+
 __Inputs__: `BJKST 14400 5`
+
 _Running Locally_
+
 `BJKST Algorithm. Bucket Size:14400. Trials:5. Time elapsed:5s. Estimate: 7449600.0`
+
 _Running on GCP_
 
 ## Comparison of algorithms

@@ -147,20 +147,6 @@ object main{
     return ans
   }
 
-  // Added by Valencig 
-  // def TugOfWarSketch(x: RDD[String], hash_4_universal: four_universal_Radamacher_hash_function) : Long = {
-  //   val z = (
-  //     // For every plate hash to [-1, 1] IN PARALLEL
-  //     x.map(plate => hash_4_universal.hash(plate))
-  //     // Sum all the hashed counts
-  //     .sum
-  //   )
-  //   // Return the estimate squared (E[z^2] = F_2)
-  //   val z_squared = (z*z).toLong
-  //   return z_squared
-  // }
-
-
   def Tug_of_War(x: RDD[String], width: Int, depth:Int) : Long = {
     val trials = width*depth
     // Create hash functions
@@ -176,18 +162,6 @@ object main{
     val median = mean_widths.sortWith(_<_)(mean_widths.length/2)
     return median
   }
-
-// def foo() : Double = {
-//   val t1 = System.nanoTime
-//   // (1 to 100).map(i => Tug_of_War(dfrdd, 1, 1))
-//   // (1 to 100).map(i => exact_F2(dfrdd))
-//   Tug_of_War(dfrdd, 1, 1)
-//   // exact_F2(dfrdd)
-//   val duration = (System.nanoTime - t1) / 1e9d
-//   return duration
-// }
-// foo()
-
 
   def exact_F0(x: RDD[String]) : Long = {
     val ans = x.distinct.count

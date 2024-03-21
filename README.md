@@ -1,19 +1,53 @@
 # Large Scale Data Processing: Project 2
-## Getting started
-Head to [Project 1](https://github.com/CSCI3390Spring2024/project_1) if you're looking for information on Git, template repositories, or setting up your local/remote environments.
 
-## Resilient distributed datasets in Spark
-This project will familiarize you with RDD manipulations by implementing some of the sketching algorithms the course has covered thus far.  
+Authors:
+- Ilan Valencius (valencig)
 
-You have been provided with the program's skeleton, which consists of 5 functions for computing either F0 or F2: the BJKST, tidemark, tug-of-war, exact F0, and exact F2 algorithms. The tidemark and exact F0 functions are given for your reference.
+## Command
+```sh
+spark-submit \
+  --class "project_2.main" \
+  --master "local[*]" target/scala-2.12/project_2_2.12-1.0.jar 2014to2017.csv _inputs_
+```
 
-## Relevant data
+## Exact F0
+__Inputs__: `exactF0`
+_Running Locally_
+`Exact F0. Time elapsed:15s. Estimate: 7406649`
+_Running on GCP_
 
-You can find the TAR file containing `2014to2017.csv` [here](https://drive.google.com/file/d/1MtCimcVKN6JrK2sLy4GbjeS7E2a-UMA0/view?usp=sharing). Download and expand the TAR file for local processing. For processing in the cloud, refer to the steps for creating a storage bucket in [Project 1](https://github.com/CSCI3390Spring2024/project_1) and upload `2014to2017.csv`.
+## Exact F2
+__Inputs__: `exactF2`
+_Running Locally_
+`Exact F2. Time elapsed:16s. Estimate: 8567966130`
+_Running on GCP_
 
-`2014to2017.csv` contains the records of parking tickets issued in New York City from 2014 to 2017. You'll see that the data has been cleaned so that only the license plate information remains. Keep in mind that a single car can receive multiple tickets within that period and therefore appear in multiple records.  
+## Tug-of-War (F2)
+__Inputs__: `ToW 10 3`
+_Running Locally_
+`ug-of-War F2 Approximation. Width :10. Depth: 3. Time elapsed:13s. Estimate: 6764401820`
+_Running on GCP_
 
-**Hint**: while implementing the functions, it may be helpful to copy 100 records or so to a new file and use that file for faster testing.  
+## BJKST (F0)
+__Determination of maximum bucket size__
+The maximum bucket size $|B|$ is determined by a constant $c$ and parameter $\varepsilon$ according to $|B| = \frac{c}{\varepsilon^2}$ and outputs a $(\varepsilon, \frac{1}{3})$ estimate. We are attempting to find a $\pm$ 20% estimate so $\varepsilon=0.2$. To determine $c$ we use the relation $$\mathbb{P}(\text{Failure}) \leq \frac{1}{12} +\frac{48}{c}$$ which is derived by using Chebyshev's inequality and Markov's inequality ([Chkrabarti Notes](https://www.cs.dartmouth.edu/~ac/Teach/data-streams-lecnotes.pdf), pg. 19.). For a $(\varepsilon, \frac{1}{3})$ estimate this probability must be upper bounded by $\frac{1}{6}$, therefore $$\mathbb{P}(\text{Failure}) \leq \frac{1}{12} +\frac{48}{c} \leq \frac{1}{6}$$ Solving this numerically yields a result of $c \geq 576$. Plugging into $\frac{c}{\varepsilon^2}$ yields $\boxed{14,400}$ for the maximum bucket with.
+__Inputs__: `BJKST 14400 5`
+_Running Locally_
+`BJKST Algorithm. Bucket Size:14400. Trials:5. Time elapsed:5s. Estimate: 7449600.0`
+_Running on GCP_
+
+## Comparison of algorithms
+We will first discuss the accuracy of the estimates by taking the values from running each function locally. 
+| | True value | Estimated | Error of estimation ($\pm$%) |
+| :-: | :-: | :-: | :-: |
+| F0 | 7406649 | 7449600 | 0.57  |
+| F2 | 8567966130 | 6764401820 | 21 |
+
+From the analysis of the median-of-means approach for the Tug-of-War algorithm we know the number of trials for each mean is calculated according to $$k=\frac{6}{\varepsilon^2}$$ By manually setting the number of trials to be $k=10$ we are outputting a $\varepsilon \approx 0.77$ estimate (which is not good). Similarly the probability of getting an $(\varepsilon, \delta)$ estimate is bounded by $$t = 10 \log{\frac{1}{\delta}}$$ Again by manually setting $t=3$ we are outputting a $\varepsilon \approx 0.77$ estimate with probability $1-\delta \approx 0.26$. We find an estimate of $F_2$ that only deviates by $\varepsilon = 0.21$ so we can be confident that our algorithm works.
+
+For the BJKST algorithm we have already discussed how we can ensure a $\varepsilon = 0.2$ estimate. We take $t=5$ so by the same approach we estimate a $\varepsilon =0.2$ estimate with probability $1-\delta \approx 0.394$. Given that our estimate only deviated by 0.57% we can be confident our algorithm works.
+
+__NOW TALK ABOUT SPEEDUP__
 
 ## Calculating and reporting your findings
 You'll be submitting a report along with your code that provides commentary on the tasks below.  

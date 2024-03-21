@@ -165,7 +165,7 @@ object main{
     val trials = width*depth
     // Create hash functions
     val hashes = Seq.fill(width*depth)(new four_universal_Radamacher_hash_function())
-    // Each accumulator is a tug of war sketch partially run
+    // Each accumulator is a sequence of partially run tug of war sketches
     def combine_by_thread = (accumulator: Seq[Long], plate: String) => Seq.range(0, trials).map(i => accumulator(i)+hashes(i).hash(plate))
     def combine_sketches = (accum1: Seq[Long], accum2: Seq[Long]) => Seq.range(0, trials).map(i => accum1(i)+accum2(i))
     // Step 1: Run all sketches
@@ -175,14 +175,6 @@ object main{
     // Step 3: get the medians and output the results
     val median = mean_widths.sortWith(_<_)(mean_widths.length/2)
     return median
-    // val widths = Seq.range(0, width*depth).map(d =>
-    //     // Create width # sketches IN PARALLEL
-    //     TugOfWarSketch(x, new four_universal_Radamacher_hash_function())
-    //   ).seq.grouped(width).toList
-    // val mean_widths = widths.map(i => i.reduce(_+_)/width)
-    // // Step 2, get the median of the means
-    // val median = mean_widths.sortWith(_<_).apply(mean_widths.length/2)
-    // return median
   }
 
 // def foo() : Double = {
@@ -210,7 +202,7 @@ object main{
       // Reduce these tuples by key, adding the numbers together -> (id, count)
       .reduceByKey(_+_)
       // Take only the counts for each tuple and square them
-      .map(summed => summed._2*summed._2)
+      .map(summed => scala.math.pow(summed._2, 2))
       // Sum all the squared counts
       .sum
     ).toLong

@@ -46,7 +46,7 @@ __Inputs__: `BJKST 14400 5`
 
 _Running Locally_
 
-`BJKST Algorithm. Bucket Size:14400. Trials:5. Time elapsed:5s. Estimate: 7449600.0`
+`BJKST Algorithm. Bucket Size:14400. Trials:5. Time elapsed:5s. Estimate: 7921664.0`
 
 _Running on GCP_
 
@@ -54,12 +54,12 @@ _Running on GCP_
 We will first discuss the accuracy of the estimates by taking the values from running each function locally. 
 | | True value | Estimated | Error of estimation ($\pm$%) |
 | :-: | :-: | :-: | :-: |
-| F0 | 7406649 | 7449600 | 0.57  |
+| F0 | 7406649 | 7921664 | 6.5  |
 | F2 | 8567966130 | 6764401820 | 21 |
 
 From the analysis of the median-of-means approach for the Tug-of-War algorithm we know the number of trials for each mean is calculated according to $$k=\frac{6}{\varepsilon^2}$$ By manually setting the number of trials to be $k=10$ we are outputting a $\varepsilon \approx 0.77$ estimate (which is not good). Similarly the probability of getting an $(\varepsilon, \delta)$ estimate is bounded by $$t = 10 \log{\frac{1}{\delta}}$$ Again by manually setting $t=3$ we are outputting a $\varepsilon \approx 0.77$ estimate with probability $1-\delta \approx 0.26$. We find an estimate of $F_2$ that only deviates by $\varepsilon = 0.21$ so we can be confident that our algorithm works.
 
-For the BJKST algorithm we have already discussed how we can ensure a $\varepsilon = 0.2$ estimate. We take $t=5$ so by the same approach we estimate a $\varepsilon =0.2$ estimate with probability $1-\delta \approx 0.394$. Given that our estimate only deviated by 0.57% we can be confident our algorithm works.
+For the BJKST algorithm we have already discussed how we can ensure a $\varepsilon = 0.2$ estimate. We take $t=5$ so by the same approach we estimate a $\varepsilon =0.2$ estimate with probability $1-\delta \approx 0.394$. Given that our estimate only deviated by 6.5% we can be confident our algorithm works.
 
 __NOW TALK ABOUT SPEEDUP__
 

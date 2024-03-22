@@ -78,11 +78,16 @@ object main{
 
     def +(that: BJKSTSketch): BJKSTSketch = {    /* Merging two sketches */
       // Set new z
-      val new_z = scala.math.max(this.z, that.z)
+      var new_z = scala.math.max(this.z, that.z)
       // Union buckets
       val new_bucket = this.bucket ++ that.bucket
       // Remove all elements from the bucket that have less than z trailing zeroes
-      val new_bucket_filtered = new_bucket.filter(plate => plate._2 >= new_z)
+      var new_bucket_filtered = new_bucket.filter(plate => plate._2 >= new_z)
+      // Filter bucket if it is bigger than final width
+      while (new_bucket_filtered.size >= BJKST_bucket_size){
+        new_z = new_z + 1
+        new_bucket_filtered = new_bucket_filtered.filter(b => b._2 >= new_z)
+      }
       return new BJKSTSketch(new_bucket_filtered, new_z, this.BJKST_bucket_size)
     }
 
@@ -95,7 +100,7 @@ object main{
           // Double the number of buckets
           z = z+1
           // Remove all elements from the bucket that have less than z trailing zeroes
-          bucket = bucket.filter(plate => plate._2 >= z)
+          bucket = bucket.filter(b => b._2 >= z)
         }
       }
       // Remove elements from the bucket

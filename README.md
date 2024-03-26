@@ -2,6 +2,8 @@
 
 Authors:
 - Ilan Valencius (valencig)
+- Steven Roche (sroche14)
+- Jason Adhinarta (jasonkena)
 
 ## Command
 ```sh

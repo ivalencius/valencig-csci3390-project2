@@ -128,7 +128,7 @@ object main{
     val sketches_raw = (
       x.aggregate(
         Seq.range(0, trials).map(i=> {
-          new BJKSTSketch(first_string, hashes(i).zeroes(hashes(i).hash(first_string)), width)
+          new BJKSTSketch(Set.empty[(String, Int)], 0, width)
         }))
       (combine_by_thread, combine_sketches)
     )

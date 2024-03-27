@@ -20,6 +20,7 @@ _Running Locally_
 `Exact F0. Time elapsed:15s. Estimate: 7406649`
 
 _Running on GCP_
+`Exact F0. Time elapsed:45s. Estimate: 7406649`
 
 ## Exact F2
 __Inputs__: `exactF2`
@@ -30,6 +31,9 @@ _Running Locally_
 
 _Running on GCP_
 
+`Exact F2. Time elapsed:55s. Estimate: 8567966130
+`
+
 ## Tug-of-War (F2)
 __Inputs__: `ToW 10 3`
 
@@ -38,6 +42,7 @@ _Running Locally_
 `Tug-of-War F2 Approximation. Width :10. Depth: 3. Time elapsed:13s. Estimate: 6764401820`
 
 _Running on GCP_
+`Tug-of-War F2 Approximation. Width :10. Depth: 3. Time elapsed:121s. Estimate: 10913921792`
 
 ## BJKST (F0)
 __Determination of maximum bucket size__
@@ -51,6 +56,8 @@ _Running Locally_
 `BJKST Algorithm. Bucket Size:14400. Trials:5. Time elapsed:5s. Estimate: 7921664.0`
 
 _Running on GCP_
+
+`BJKST Algorithm. Bucket Size:14400. Trials:5. Time elapsed:39s. Estimate: 7870464.0`
 
 ## Comparison of algorithms
 We will first discuss the accuracy of the estimates by taking the values from running each function locally. 

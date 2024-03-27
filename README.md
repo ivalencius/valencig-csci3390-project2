@@ -70,7 +70,8 @@ From the analysis of the median-of-means approach for the Tug-of-War algorithm w
 
 For the BJKST algorithm we have already discussed how we can ensure a $\varepsilon = 0.2$ estimate. We take $t=5$ so by the same approach we estimate a $\varepsilon =0.2$ estimate with probability $1-\delta \approx 0.394$. Given that our estimate only deviated by 6.5% we can be confident our algorithm works.
 
-__NOW TALK ABOUT SPEEDUP__
+### Speedup Comparisions
+In each of the algorithms, the run time for GCP is significantly longer than the runtime on the local machine. However, this is for several reasons. First, GCP takes some time to allocate resources to each job which adds to the runtime of GCP instead of on a local machine (where the resources are allocated very quickly). Moreover, the plate dataset is not of sufficient size to cause the local runtime to be longer than the GCP runtime. This is because GCP has an advantage over using a laptop only when the dataset is large enough to see significant benefits from the increased parallelization and computing power on GCP.
 
 ## Calculating and reporting your findings
 You'll be submitting a report along with your code that provides commentary on the tasks below.  
